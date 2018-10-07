@@ -20,6 +20,17 @@ const wss = new SocketServer({server});
 // the ws parameter in the callback.
 wss.on('connection', (ws) => {
   console.log('Client connected');
+  // online client count sent from server
+  console.log(wss.clients.size);
+  let clientCount = {
+    count: wss.clients.size,
+    id: crypto.randomBytes(16).toString("hex"),
+    type: "clientCount"  
+  }
+  wss.clients.forEach(function each(client) {
+    client.send(JSON.stringify(clientCount));
+  });
+
   ws.on('message', (message) => {
     let obj = JSON.parse(message);
     
@@ -28,21 +39,27 @@ wss.on('connection', (ws) => {
           obj.id = crypto.randomBytes(16).toString("hex");
           obj.type = "incomingMessage";
           console.log(obj);
-          //client.send(JSON.stringify(obj));
           break;
         case "postNotification":
           obj.id = crypto.randomBytes(16).toString("hex");
           obj.type = "incomingNotification";
           console.log(obj);
-          //client.send(JSON.stringify(obj));
           break;
       }
       wss.clients.forEach(function each(client) {
-        //if (client.readyState === wss.OPEN) {
           client.send(JSON.stringify(obj));
-        //}
       });
   });
   // Set up a callback for when a client closes the socket. This usually means they closed their browser.
-  ws.on('close', () => console.log('Client disconnected'));
+  ws.on('close', () => {
+    let clientCount = {
+    count: wss.clients.size,
+    id: crypto.randomBytes(16).toString("hex"),
+    type: "clientCount"  
+    }
+    wss.clients.forEach(function each(client) {
+      client.send(JSON.stringify(clientCount));
+    });
+    console.log('Client disconnected');
+  });
 });
