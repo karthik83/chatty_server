@@ -2,11 +2,12 @@
 
 const express = require('express');
 const SocketServer = require('ws').Server;
+const crypto = require("crypto");
 
 // Set the port to 3001
 const PORT = 3001;
 
-// Create a new express server
+// Create a new express serverd
 const server = express()
    // Make the express server serve static assets (html, javascript, css) from the /public folder
   .use(express.static('public'))
@@ -20,8 +21,16 @@ const wss = new SocketServer({ server });
 // the ws parameter in the callback.
 wss.on('connection', (ws) => {
   console.log('Client connected');
-
+  ws.on('message', (message) => {
+  	let obj = JSON.parse(message);
+  	wss.clients.forEach(function each(client) {
+  		//if (client.readyState === WebSocket.OPEN) {
+  		  obj.id = crypto.randomBytes(16).toString("hex");
+  		  console.log(obj);
+    	  client.send(JSON.stringify(obj));
+    	//}
+	});
+  });
   // Set up a callback for when a client closes the socket. This usually means they closed their browser.
   ws.on('close', () => console.log('Client disconnected'));
 });
-
